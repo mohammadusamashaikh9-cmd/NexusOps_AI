@@ -1,4 +1,6 @@
 from fastapi import FastAPI
+from pydantic import BaseModel
+from typing import Any, Dict
 
 app = FastAPI(
     title="NexusOps AI API",
@@ -11,6 +13,27 @@ def health_check():
     return {"status": "ok", "message": "NexusOps AI backend is running."}
 
 # Mock Endpoints for MVP Agents
+class OrchestrationRequest(BaseModel):
+    task: str
+
+@app.post("/api/orchestrate")
+def orchestrate_workflow(request: OrchestrationRequest):
+    planner_result = planner_agent_mock({"task": request.task})
+    researcher_result = researcher_agent_mock({"query": planner_result.get("plan", [])})
+    executor_result = executor_agent_mock({"action": "execute plan", "context": researcher_result})
+    reviewer_result = reviewer_agent_mock({"review_request": executor_result})
+    
+    return {
+        "task": request.task,
+        "workflow": {
+            "planner": planner_result,
+            "researcher": researcher_result,
+            "executor": executor_result,
+            "reviewer": reviewer_result
+        },
+        "final_result": "Workflow completed and approved."
+    }
+
 @app.post("/api/agents/planner")
 def planner_agent_mock(task: dict):
     return {"agent": "planner", "status": "mock", "plan": ["step 1", "step 2"]}
