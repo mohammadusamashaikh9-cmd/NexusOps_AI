@@ -45,3 +45,9 @@ uvicorn main:app --reload --port 8000
 - **Frontend Dashboard:** http://localhost:5173
 - **Backend API Docs:** http://localhost:8000/docs
 - **Backend Health Endpoint:** http://localhost:8000/api/health
+
+## AI Engine Modes
+NexusOps AI operates in two distinct backend modes, controlled by the `USE_MOCK_AI` environment variable in your `.env` file:
+
+1. **Mock Mode (Default):** Runs instantly using local simulated data. Perfect for UI/UX development and testing without incurring API costs. Triggered when `USE_MOCK_AI=true` or if the Fireworks API key is missing/invalid.
+2. **Fireworks AI Mode:** Enables live Gemma model inference for task breakdown and execution analysis. Requires `USE_MOCK_AI=false` and a valid `FIREWORKS_API_KEY`.
