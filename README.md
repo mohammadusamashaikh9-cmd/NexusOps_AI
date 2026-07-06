@@ -17,8 +17,31 @@ Build a robust platform where four AI agents collaborate autonomously to complet
 - **Deployment:** Docker / docker-compose ready.
 
 ## Getting Started
-(Detailed instructions will be added as the project progresses)
 
 1. Clone the repository.
 2. Copy `.env.example` to `.env` and configure it.
-3. Run `docker-compose up --build`.
+
+### Option A: Run with Docker (Recommended)
+Run the following command to spin up both the frontend and backend:
+```bash
+docker-compose up --build
+```
+
+### Option B: Run Locally
+**Frontend:**
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+**Backend:**
+```bash
+cd backend
+uvicorn main:app --reload --port 8000
+```
+
+### Accessing the Application
+- **Frontend Dashboard:** http://localhost:5173
+- **Backend API Docs:** http://localhost:8000/docs
+- **Backend Health Endpoint:** http://localhost:8000/api/health
