@@ -22,11 +22,11 @@ def health_check():
     return {"status": "ok", "message": "NexusOps AI backend is running."}
 
 # Mock Endpoints for MVP Agents
-from services.ai_service import execute_workflow
+from services.workflow_service import run_workflow
 
 class WorkflowRequest(BaseModel):
     task: str
 
 @app.post("/api/workflow/run")
-def run_workflow(request: WorkflowRequest):
-    return execute_workflow(request.task)
+def api_run_workflow(request: WorkflowRequest):
+    return run_workflow(request.task)
