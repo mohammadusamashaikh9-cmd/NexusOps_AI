@@ -28,7 +28,7 @@ def get_mock_workflow(task: str, error_mode: bool = False) -> dict:
         "executor_output": {"agent": "executor", "status": status, "result": "Deployed optimization patch."},
         "reviewer_output": {"agent": "reviewer", "status": status, "approval": True},
         "final_output": f"Workflow completed successfully and reviewed. Executed task: {task}" + (" (Fallback)" if error_mode else ""),
-        "mode": "mock",
+        "mode": "fallback_mock" if error_mode else "mock",
         "trace": tracer.get_traces(),
         "reviewer_score": reviewer_score
     }

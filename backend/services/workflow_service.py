@@ -49,7 +49,7 @@ def run_workflow(task: str) -> dict:
             "executor_output": {"agent": "executor", "status": "live", "result": "AI Execution complete"},
             "reviewer_output": {"agent": "reviewer", "status": "live", "approval": True},
             "final_output": llm_response,
-            "mode": "live",
+            "mode": "live_fireworks",
             "trace": tracer.get_traces(),
             "reviewer_score": reviewer_score
         }
