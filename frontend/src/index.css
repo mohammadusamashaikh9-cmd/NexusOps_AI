@@ -671,6 +671,47 @@ h3 {
   white-space: pre-wrap;
 }
 
+.reviewer-score-card {
+  margin-top: 14px;
+  border-radius: 8px;
+  padding: 15px;
+  background: rgba(25, 33, 56, 0.6);
+  border: 1px solid rgba(168, 150, 255, 0.18);
+}
+
+.score-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.score-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.score-item span {
+  font-size: 0.65rem;
+  color: var(--text-soft);
+  text-transform: uppercase;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+}
+
+.score-item strong {
+  font-size: 1.05rem;
+  color: #fff;
+}
+
+.risk-badge[data-risk="low"] { color: #aaf7d2; }
+.risk-badge[data-risk="medium"] { color: #ffd9a3; }
+.risk-badge[data-risk="high"] { color: #ff8a8a; }
+
+.decision-badge[data-decision="pass"] { color: #aaf7d2; }
+.decision-badge[data-decision="fail"] { color: #ff8a8a; }
+
 .empty-report {
   position: relative;
   min-height: 278px;
@@ -771,12 +812,27 @@ h3 {
   color: #9eabc5;
   background: rgba(101, 114, 151, 0.16);
   font-size: 0.76rem;
+  flex-shrink: 0;
+}
+
+.audit-row div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.audit-row strong {
+  font-size: 0.75rem;
+  color: #e3eaff;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .audit-row p {
   margin-bottom: 0;
   color: #c3cce0;
   line-height: 1.5;
+  font-size: 0.8rem;
 }
 
 .audit-row.done span {
@@ -785,7 +841,7 @@ h3 {
 }
 
 .audit-row.done p {
-  color: #ffffff;
+  color: #a4b3d8;
 }
 
 .audit-row.error {

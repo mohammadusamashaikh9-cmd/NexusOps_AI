@@ -12,6 +12,20 @@ interface AgentOutput {
   [key: string]: unknown
 }
 
+interface TraceEvent {
+  step: string
+  status: string
+  message: string
+}
+
+interface ReviewerScore {
+  clarity?: number
+  completeness?: number
+  actionability?: number
+  risk?: string
+  decision?: string
+}
+
 interface WorkflowResponse {
   task?: string
   planner_output?: AgentOutput
@@ -20,6 +34,8 @@ interface WorkflowResponse {
   reviewer_output?: AgentOutput
   final_output?: string
   mode?: string
+  trace?: TraceEvent[]
+  reviewer_score?: ReviewerScore
 }
 
 interface AgentCardConfig {
@@ -253,7 +269,7 @@ export default function App() {
     }
   }
 
-  const auditLogs = [
+  const fallbackAuditLogs = [
     { label: 'Task received', done: Boolean(workflowData?.task) || isLoading },
     { label: 'Planner completed', done: Boolean(workflowData?.planner_output) },
     { label: 'Research completed', done: Boolean(workflowData?.research_output) },
@@ -450,6 +466,34 @@ export default function App() {
                   <p>{workflowData.task || taskInput}</p>
                 </div>
                 <div className="final-output">{workflowData.final_output}</div>
+                
+                {workflowData.reviewer_score && (
+                  <div className="reviewer-score-card">
+                    <p className="eyebrow">Reviewer Score</p>
+                    <div className="score-grid">
+                      <div className="score-item">
+                        <span>Clarity</span>
+                        <strong>{workflowData.reviewer_score.clarity ?? '-'}</strong>
+                      </div>
+                      <div className="score-item">
+                        <span>Completeness</span>
+                        <strong>{workflowData.reviewer_score.completeness ?? '-'}</strong>
+                      </div>
+                      <div className="score-item">
+                        <span>Actionability</span>
+                        <strong>{workflowData.reviewer_score.actionability ?? '-'}</strong>
+                      </div>
+                      <div className="score-item">
+                        <span>Risk</span>
+                        <strong className="risk-badge" data-risk={workflowData.reviewer_score.risk}>{workflowData.reviewer_score.risk ?? '-'}</strong>
+                      </div>
+                      <div className="score-item">
+                        <span>Decision</span>
+                        <strong className="decision-badge" data-decision={workflowData.reviewer_score.decision}>{workflowData.reviewer_score.decision ?? '-'}</strong>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </>
             ) : (
               <div className="empty-report">
@@ -470,16 +514,32 @@ export default function App() {
             <p className="eyebrow">Workflow Logs</p>
             <h2>Audit Trace</h2>
             <div className="audit-list">
-              {auditLogs.map((log, index) => (
-                <div className={`audit-row ${log.done ? 'done' : ''}`} key={log.label}>
-                  <span>{String(index + 1).padStart(2, '0')}</span>
-                  <p>{log.label}</p>
-                </div>
-              ))}
+              {workflowData?.trace ? (
+                workflowData.trace.map((event, index) => (
+                  <div className="audit-row done" key={index}>
+                    <span>{String(index + 1).padStart(2, '0')}</span>
+                    <div>
+                      <strong>{event.step}</strong>
+                      <p>{event.message}</p>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                fallbackAuditLogs.map((log, index) => (
+                  <div className={`audit-row ${log.done ? 'done' : ''}`} key={log.label}>
+                    <span>{String(index + 1).padStart(2, '0')}</span>
+                    <div>
+                      <p>{log.label}</p>
+                    </div>
+                  </div>
+                ))
+              )}
               {error && (
                 <div className="audit-row error">
                   <span>!</span>
-                  <p>{error}</p>
+                  <div>
+                    <p>{error}</p>
+                  </div>
                 </div>
               )}
             </div>
