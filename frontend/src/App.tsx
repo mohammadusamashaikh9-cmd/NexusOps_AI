@@ -1,4 +1,9 @@
 import { useMemo, useState, type ReactNode } from 'react'
+import {
+  LayoutDashboard, GitBranch, ScrollText, Network, Settings, Plus, Play,
+  ListChecks, Search, TerminalSquare, ShieldCheck, FileText,
+  Activity, Server, Box, Cpu, Bot
+} from 'lucide-react'
 
 type AgentStatus = 'idle' | 'running' | 'completed' | 'error'
 type ReportTab = 'report' | 'audit'
@@ -61,6 +66,12 @@ type IconName =
   | 'reviewer'
   | 'run'
   | 'report'
+  | 'model'
+  | 'fallback'
+  | 'backend'
+  | 'container'
+  | 'gpu'
+  | 'trace'
 
 const logoSrc = '/brand/nexusops-logo.png'
 
@@ -92,108 +103,68 @@ const agentCards: AgentCardConfig[] = [
 ]
 
 const harnessItems = [
-  ['Model Service', 'Fireworks/Gemma Ready'],
-  ['Mock Fallback', 'Active'],
-  ['Backend', 'FastAPI'],
-  ['Container', 'Docker'],
-  ['GPU Target', 'AMD ROCm'],
-  ['Workflow Trace', 'Enabled'],
+  { label: 'Model Service', value: 'Fireworks / Gemma\nReady', icon: 'model' },
+  { label: 'Mock Fallback', value: 'Active', icon: 'fallback' },
+  { label: 'Backend', value: 'FastAPI', icon: 'backend' },
+  { label: 'Container', value: 'Docker', icon: 'container' },
+  { label: 'GPU Target', value: 'AMD ROCm', icon: 'gpu' },
+  { label: 'Workflow Trace', value: 'Enabled', icon: 'trace' },
 ]
 
 function Icon({ name }: { name: IconName }) {
-  const common = {
-    width: 20,
-    height: 20,
-    viewBox: '0 0 24 24',
-    fill: 'none',
-    stroke: 'currentColor',
-    strokeWidth: 1.8,
-    strokeLinecap: 'round' as const,
-    strokeLinejoin: 'round' as const,
-    'aria-hidden': true,
+  const props = { className: "lucide-icon" }
+  switch (name) {
+    case 'command': return <LayoutDashboard {...props} />
+    case 'workflow': return <GitBranch {...props} />
+    case 'audit': return <ScrollText {...props} />
+    case 'harness': return <Network {...props} />
+    case 'settings': return <Settings {...props} />
+    case 'plus': return <Plus {...props} />
+    case 'planner': return <ListChecks {...props} />
+    case 'research': return <Search {...props} />
+    case 'executor': return <TerminalSquare {...props} />
+    case 'reviewer': return <ShieldCheck {...props} />
+    case 'run': return <Play {...props} />
+    case 'report': return <FileText {...props} />
+    case 'model': return <Bot {...props} />
+    case 'fallback': return <Activity {...props} />
+    case 'backend': return <Server {...props} />
+    case 'container': return <Box {...props} />
+    case 'gpu': return <Cpu {...props} />
+    case 'trace': return <Activity {...props} />
+    default: return null
   }
-
-  const paths: Record<IconName, ReactNode> = {
-    command: (
-      <>
-        <rect x="4" y="4" width="6" height="6" rx="1.2" />
-        <rect x="14" y="4" width="6" height="6" rx="1.2" />
-        <rect x="4" y="14" width="6" height="6" rx="1.2" />
-        <path d="M14 17h6M17 14v6" />
-      </>
-    ),
-    workflow: (
-      <>
-        <rect x="3" y="5" width="5" height="5" rx="1" />
-        <rect x="16" y="5" width="5" height="5" rx="1" />
-        <rect x="9.5" y="15" width="5" height="5" rx="1" />
-        <path d="M8 7.5h8M12 10v5" />
-      </>
-    ),
-    audit: (
-      <>
-        <path d="M7 3h8l4 4v14H7z" />
-        <path d="M15 3v5h5M10 12h6M10 16h6M10 20h4" />
-      </>
-    ),
-    harness: (
-      <>
-        <path d="M12 3v4M12 17v4M3 12h4M17 12h4" />
-        <circle cx="12" cy="12" r="5" />
-        <circle cx="12" cy="12" r="1.5" />
-      </>
-    ),
-    settings: (
-      <>
-        <circle cx="12" cy="12" r="3" />
-        <path d="M19 12a7 7 0 0 0-.1-1.2l2-1.5-2-3.4-2.4 1a7 7 0 0 0-2-1.1L14 3h-4l-.5 2.8a7 7 0 0 0-2 1.1l-2.4-1-2 3.4 2 1.5A7 7 0 0 0 5 12c0 .4 0 .8.1 1.2l-2 1.5 2 3.4 2.4-1a7 7 0 0 0 2 1.1L10 21h4l.5-2.8a7 7 0 0 0 2-1.1l2.4 1 2-3.4-2-1.5c.1-.4.1-.8.1-1.2Z" />
-      </>
-    ),
-    plus: <path d="M12 5v14M5 12h14" />,
-    planner: (
-      <>
-        <path d="M8 4h8M12 4v16M8 20h8" />
-        <path d="M9 8l-3 3 3 3M15 8l3 3-3 3" />
-      </>
-    ),
-    research: (
-      <>
-        <circle cx="10.5" cy="10.5" r="5.5" />
-        <path d="M15 15l5 5M8.5 10.5h4M10.5 8.5v4" />
-      </>
-    ),
-    executor: (
-      <>
-        <rect x="5" y="5" width="14" height="14" rx="2" />
-        <path d="M9 9h6v6H9zM12 2v3M12 19v3M2 12h3M19 12h3" />
-      </>
-    ),
-    reviewer: (
-      <>
-        <path d="M12 4c4.5 0 8 4 9 8-1 4-4.5 8-9 8s-8-4-9-8c1-4 4.5-8 9-8Z" />
-        <circle cx="12" cy="12" r="3" />
-      </>
-    ),
-    run: <path d="M8 5v14l11-7z" />,
-    report: (
-      <>
-        <path d="M5 4h14v16H5z" />
-        <path d="M9 9h6M9 13h6M9 17h4" />
-      </>
-    ),
-  }
-
-  return <svg {...common}>{paths[name]}</svg>
 }
 
-function formatValue(value: unknown): string {
+function formatValue(value: unknown): ReactNode {
   if (value === undefined || value === null || value === '') return 'Awaiting output'
+  if (Array.isArray(value)) {
+    return (
+      <ul className="output-list">
+        {value.map((item, i) => (
+          <li key={i}>{String(item)}</li>
+        ))}
+      </ul>
+    )
+  }
   if (typeof value === 'string') return value
   if (typeof value === 'number' || typeof value === 'boolean') return String(value)
+  if (typeof value === 'object') {
+    return (
+      <div className="output-object">
+        {Object.entries(value).map(([k, v]) => (
+          <div key={k} className="object-row">
+            <span className="object-key">{k}:</span>
+            <span className="object-val">{String(v)}</span>
+          </div>
+        ))}
+      </div>
+    )
+  }
   return JSON.stringify(value, null, 2)
 }
 
-function summarizeOutput(output?: AgentOutput): string {
+function summarizeOutput(output?: AgentOutput): ReactNode {
   if (!output) return 'No workflow data yet.'
   if ('plan' in output) return formatValue(output.plan)
   if ('findings' in output) return formatValue(output.findings)
@@ -419,10 +390,13 @@ export default function App() {
             </div>
           </div>
           <div className="harness-grid">
-            {harnessItems.map(([label, value]) => (
-              <article className="harness-card" key={label}>
-                <span>{label}</span>
-                <strong>{value}</strong>
+            {harnessItems.map((item) => (
+              <article className="harness-card" key={item.label}>
+                <div className="harness-card-header">
+                  <Icon name={item.icon as IconName} />
+                  <span>{item.label}</span>
+                </div>
+                <strong>{item.value}</strong>
               </article>
             ))}
           </div>
