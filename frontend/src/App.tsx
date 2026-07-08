@@ -7,6 +7,7 @@ import {
 
 type AgentStatus = 'idle' | 'running' | 'completed' | 'error'
 type ReportTab = 'report' | 'audit'
+type SectionId = 'command' | 'workflow' | 'audit' | 'harness' | 'settings'
 
 interface AgentOutput {
   status?: string
@@ -206,6 +207,7 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<ReportTab>('report')
+  const [activeSection, setActiveSection] = useState<SectionId>('command')
 
   const sessionId = useMemo(() => {
     const seed = workflowData?.task || taskInput || 'NexusOps AI'
@@ -267,8 +269,12 @@ export default function App() {
             ['Audit', 'audit'],
             ['Harness', 'harness'],
             ['Settings', 'settings'],
-          ].map(([label, icon], index) => (
-            <button className={`nav-item ${index === 0 ? 'active' : ''}`} key={label}>
+          ].map(([label, icon]) => (
+            <button 
+              className={`nav-item ${activeSection === icon ? 'active' : ''}`} 
+              key={label}
+              onClick={() => setActiveSection(icon as SectionId)}
+            >
               <Icon name={icon as IconName} />
               <span>{label}</span>
             </button>
@@ -295,115 +301,301 @@ export default function App() {
       </header>
 
       <main className="ops-main">
-        <section className="command-hero">
-          <div>
-            <p className="eyebrow">Enterprise Multi-Agent Operations</p>
-            <h1>Command Center</h1>
-            <p className="hero-copy">
-              Dispatch an operations task to the NexusOps AI agent team and inspect each
-              stage from planning through final review.
-            </p>
-          </div>
-          <div className="session-card">
-            <span>Session ID</span>
-            <strong>{sessionId}</strong>
-          </div>
-        </section>
+        {activeSection === 'command' && (
+          <>
+            <section className="command-hero">
+              <div>
+                <p className="eyebrow">Enterprise Multi-Agent Operations</p>
+                <h1>Command Center</h1>
+                <p className="hero-copy">
+                  Dispatch an operations task to the NexusOps AI agent team and inspect each
+                  stage from planning through final review.
+                </p>
+              </div>
+              <div className="session-card">
+                <span>Session ID</span>
+                <strong>{sessionId}</strong>
+              </div>
+            </section>
 
-        <section className="task-card" aria-labelledby="task-command-title">
-          <div className="section-heading">
-            <div>
-              <p className="eyebrow">Task Command</p>
-              <h2 id="task-command-title">Agent Team Objective</h2>
-            </div>
-            <span className={`run-state ${isLoading ? 'running' : error ? 'error' : workflowData ? 'completed' : ''}`}>
-              {isLoading ? 'Running' : error ? 'Error' : workflowData ? 'Completed' : 'Idle'}
-            </span>
-          </div>
-
-          <textarea
-            value={taskInput}
-            onChange={(event) => setTaskInput(event.target.value)}
-            onKeyDown={(event) => {
-              if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
-                event.preventDefault()
-                handleRunWorkflow()
-              }
-            }}
-            placeholder="Describe an operations task for the AI agent team..."
-            className="task-input"
-            rows={4}
-          />
-          <p className="prompt-helper">
-            Try: Create a launch plan for NexusOps AI for the AMD Developer Hackathon.
-          </p>
-
-          <div className="command-actions">
-            <span>Press Ctrl + Enter to run the workflow.</span>
-            <button
-              className="run-button"
-              type="button"
-              onClick={handleRunWorkflow}
-              disabled={isLoading || !taskInput.trim()}
-            >
-              <Icon name="run" />
-              {isLoading ? 'Running Workflow' : 'Run Workflow'}
-            </button>
-          </div>
-
-          {error && <div className="error-banner">{error}</div>}
-        </section>
-
-        <section className="pipeline-section" aria-labelledby="pipeline-title">
-          <div className="section-heading">
-            <div>
-              <p className="eyebrow">Pipeline State Flow</p>
-              <h2 id="pipeline-title">Four-Agent Inspection Pipeline</h2>
-            </div>
-          </div>
-
-          <div className="agent-grid">
-            {agentCards.map((agent, index) => {
-              const output = workflowData?.[agent.key]
-              const status = getAgentStatus(output, isLoading, index, Boolean(error))
-
-              return (
-                <article className={`agent-card ${status}`} key={agent.name}>
-                  <div className="agent-icon">
-                    <Icon name={agent.icon} />
-                  </div>
-                  <span className={`state-badge ${status}`}>{status}</span>
-                  <h3>{agent.name}</h3>
-                  <p>{agent.role}</p>
-                  <pre>{summarizeOutput(output)}</pre>
-                </article>
-              )
-            })}
-          </div>
-        </section>
-
-        <section className="harness-section" aria-labelledby="harness-title">
-          <div className="section-heading">
-            <div>
-              <p className="eyebrow">System Harness</p>
-              <h2 id="harness-title">Project Readiness</h2>
-            </div>
-          </div>
-          <div className="harness-grid">
-            {harnessItems.map((item) => (
-              <article className="harness-card" key={item.label}>
-                <div className="harness-card-header">
-                  <Icon name={item.icon as IconName} />
-                  <span>{item.label}</span>
+            <section className="task-card" aria-labelledby="task-command-title">
+              <div className="section-heading">
+                <div>
+                  <p className="eyebrow">Task Command</p>
+                  <h2 id="task-command-title">Agent Team Objective</h2>
                 </div>
-                <strong>{item.value}</strong>
+                <span className={`run-state ${isLoading ? 'running' : error ? 'error' : workflowData ? 'completed' : ''}`}>
+                  {isLoading ? 'Running' : error ? 'Error' : workflowData ? 'Completed' : 'Idle'}
+                </span>
+              </div>
+
+              <textarea
+                value={taskInput}
+                onChange={(event) => setTaskInput(event.target.value)}
+                onKeyDown={(event) => {
+                  if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+                    event.preventDefault()
+                    handleRunWorkflow()
+                  }
+                }}
+                placeholder="Describe an operations task for the AI agent team..."
+                className="task-input"
+                rows={4}
+              />
+              <p className="prompt-helper">
+                Try: Create a launch plan for NexusOps AI for the AMD Developer Hackathon.
+              </p>
+
+              <div className="command-actions">
+                <span>Press Ctrl + Enter to run the workflow.</span>
+                <button
+                  className="run-button"
+                  type="button"
+                  onClick={handleRunWorkflow}
+                  disabled={isLoading || !taskInput.trim()}
+                >
+                  <Icon name="run" />
+                  {isLoading ? 'Running Workflow' : 'Run Workflow'}
+                </button>
+              </div>
+
+              {error && <div className="error-banner">{error}</div>}
+            </section>
+
+            <section className="pipeline-section" aria-labelledby="pipeline-title">
+              <div className="section-heading">
+                <div>
+                  <p className="eyebrow">Pipeline State Flow</p>
+                  <h2 id="pipeline-title">Four-Agent Inspection Pipeline</h2>
+                </div>
+              </div>
+              <div className="agent-grid">
+                {agentCards.map((agent, index) => {
+                  const output = workflowData?.[agent.key]
+                  const status = getAgentStatus(output, isLoading, index, Boolean(error))
+                  return (
+                    <article className={`agent-card ${status}`} key={agent.name}>
+                      <div className="agent-icon">
+                        <Icon name={agent.icon} />
+                      </div>
+                      <span className={`state-badge ${status}`}>{status}</span>
+                      <h3>{agent.name}</h3>
+                      <p>{agent.role}</p>
+                      <pre>{summarizeOutput(output)}</pre>
+                    </article>
+                  )
+                })}
+              </div>
+            </section>
+
+            <section className="harness-section" aria-labelledby="harness-title">
+              <div className="section-heading">
+                <div>
+                  <p className="eyebrow">System Harness</p>
+                  <h2 id="harness-title">Project Readiness</h2>
+                </div>
+              </div>
+              <div className="harness-grid">
+                {harnessItems.map((item) => (
+                  <article className="harness-card" key={item.label}>
+                    <div className="harness-card-header">
+                      <Icon name={item.icon as IconName} />
+                      <span>{item.label}</span>
+                    </div>
+                    <strong>{item.value}</strong>
+                  </article>
+                ))}
+              </div>
+            </section>
+          </>
+        )}
+
+        {activeSection === 'workflow' && (
+          <section className="pipeline-section" aria-labelledby="pipeline-title">
+            <div className="section-heading">
+              <div>
+                <p className="eyebrow">Pipeline State Flow</p>
+                <h2 id="pipeline-title">Four-Agent Inspection Pipeline</h2>
+              </div>
+            </div>
+            
+            <div className="agent-grid">
+              {agentCards.map((agent, index) => {
+                const output = workflowData?.[agent.key]
+                const status = getAgentStatus(output, isLoading, index, Boolean(error))
+
+                return (
+                  <article className={`agent-card ${status}`} key={agent.name}>
+                    <div className="agent-icon">
+                      <Icon name={agent.icon} />
+                    </div>
+                    <span className={`state-badge ${status}`}>{status}</span>
+                    <h3>{agent.name}</h3>
+                    <p>{agent.role}</p>
+                    <pre>{summarizeOutput(output)}</pre>
+                  </article>
+                )
+              })}
+            </div>
+
+            {workflowData?.trace && (
+              <div className="workflow-meta" style={{ marginTop: '24px', color: '#9eabc5', fontSize: '0.9rem' }}>
+                <p>Workflow trace events recorded: <strong>{workflowData.trace.length}</strong></p>
+              </div>
+            )}
+          </section>
+        )}
+
+        {activeSection === 'audit' && (
+          <section className="audit-section" style={{ maxWidth: '800px', margin: '0 auto', width: '100%' }}>
+            <div className="section-heading">
+              <div>
+                <p className="eyebrow">Workflow Logs</p>
+                <h2>Audit Trace Overview</h2>
+              </div>
+              <span className={`mode-badge ${modeLabel(workflowData?.mode)}`}>
+                {modeLabel(workflowData?.mode)}
+              </span>
+            </div>
+
+            {!workflowData && !isLoading && (
+               <div className="empty-report" style={{ border: '1px solid var(--line)', padding: '3rem', borderRadius: '8px', textAlign: 'center' }}>
+                 <div className="empty-report-icon" style={{ display: 'inline-flex', marginBottom: '16px' }}>
+                   <Icon name="audit" />
+                 </div>
+                 <h3 style={{ marginBottom: '8px' }}>No active workflow trace</h3>
+                 <p style={{ color: '#a4b3d8' }}>Run a workflow in the Command Center to populate this trace.</p>
+               </div>
+            )}
+
+            <div className="audit-list">
+              {workflowData?.trace ? (
+                workflowData.trace.map((event, index) => (
+                  <div className="audit-row done" key={index}>
+                    <span>{String(index + 1).padStart(2, '0')}</span>
+                    <div>
+                      <strong>{event.step}</strong>
+                      <p>{event.message}</p>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                fallbackAuditLogs.map((log, index) => (
+                  <div className={`audit-row ${log.done ? 'done' : ''}`} key={log.label}>
+                    <span>{String(index + 1).padStart(2, '0')}</span>
+                    <div>
+                      <p>{log.label}</p>
+                    </div>
+                  </div>
+                ))
+              )}
+              {error && (
+                <div className="audit-row error">
+                  <span>!</span>
+                  <div>
+                    <p>{error}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {workflowData?.reviewer_score && (
+              <div className="reviewer-score-card" style={{ marginTop: '2rem' }}>
+                <p className="eyebrow">Reviewer Score</p>
+                <div className="score-grid">
+                  <div className="score-item">
+                    <span>Clarity</span>
+                    <strong>{workflowData.reviewer_score.clarity ?? '-'}</strong>
+                  </div>
+                  <div className="score-item">
+                    <span>Completeness</span>
+                    <strong>{workflowData.reviewer_score.completeness ?? '-'}</strong>
+                  </div>
+                  <div className="score-item">
+                    <span>Actionability</span>
+                    <strong>{workflowData.reviewer_score.actionability ?? '-'}</strong>
+                  </div>
+                  <div className="score-item">
+                    <span>Risk</span>
+                    <strong className="risk-badge" data-risk={workflowData.reviewer_score.risk}>{workflowData.reviewer_score.risk ?? '-'}</strong>
+                  </div>
+                  <div className="score-item">
+                    <span>Decision</span>
+                    <strong className="decision-badge" data-decision={workflowData.reviewer_score.decision}>{workflowData.reviewer_score.decision ?? '-'}</strong>
+                  </div>
+                </div>
+              </div>
+            )}
+          </section>
+        )}
+
+        {activeSection === 'harness' && (
+          <section className="harness-section" aria-labelledby="harness-title">
+            <div className="section-heading">
+              <div>
+                <p className="eyebrow">System Harness</p>
+                <h2 id="harness-title">Project Readiness</h2>
+                <p style={{ color: '#c3cce0', marginTop: '12px', fontSize: '0.9rem' }}>
+                  NexusOps AI uses a harness layer to keep agent workflows traceable, reviewed, and fallback-safe.
+                </p>
+              </div>
+            </div>
+            <div className="harness-grid">
+              {harnessItems.map((item) => (
+                <article className="harness-card" key={item.label}>
+                  <div className="harness-card-header">
+                    <Icon name={item.icon as IconName} />
+                    <span>{item.label}</span>
+                  </div>
+                  <strong>{item.value}</strong>
+                </article>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {activeSection === 'settings' && (
+          <section className="settings-section" style={{ maxWidth: '600px', width: '100%' }}>
+            <div className="section-heading">
+              <div>
+                <p className="eyebrow">Configuration</p>
+                <h2>Settings</h2>
+              </div>
+            </div>
+            
+            <div className="error-banner" style={{ marginBottom: '24px', background: 'rgba(234, 179, 8, 0.1)', borderColor: 'rgba(234, 179, 8, 0.3)', color: '#fef08a' }}>
+              <Icon name="settings" />
+              <span>Secrets are never displayed in the frontend.</span>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <article className="harness-card" style={{ minHeight: 'auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: '#9eabc5' }}>Mock Mode</span>
+                <strong style={{ color: '#31d8f2' }}>Enabled</strong>
               </article>
-            ))}
-          </div>
-        </section>
+              <article className="harness-card" style={{ minHeight: 'auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: '#9eabc5' }}>Live Fireworks Mode</span>
+                <strong style={{ color: '#9eabc5' }}>Disabled until controlled test</strong>
+              </article>
+              <article className="harness-card" style={{ minHeight: 'auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: '#9eabc5' }}>API Endpoint</span>
+                <strong style={{ color: '#ffffff' }}>/api/workflow/run</strong>
+              </article>
+              <article className="harness-card" style={{ minHeight: 'auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: '#9eabc5' }}>Secrets</span>
+                <strong style={{ color: '#657297' }}>Backend env only</strong>
+              </article>
+              <article className="harness-card" style={{ minHeight: 'auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: '#9eabc5' }}>Frontend Secret Exposure</span>
+                <strong style={{ color: '#657297' }}>Disabled</strong>
+              </article>
+            </div>
+          </section>
+        )}
       </main>
 
-      <aside className="report-panel">
+      {activeSection === 'command' && (
+        <aside className="report-panel">
         <div className="report-tabs" role="tablist" aria-label="Workflow report">
           <button
             className={activeTab === 'report' ? 'active' : ''}
@@ -519,7 +711,8 @@ export default function App() {
             </div>
           </section>
         )}
-      </aside>
+        </aside>
+      )}
     </div>
   )
 }
