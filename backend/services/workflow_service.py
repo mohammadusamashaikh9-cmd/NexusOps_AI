@@ -3,13 +3,13 @@ from services.mock_service import get_mock_workflow
 from services.prompt_templates import FINAL_OUTPUT_PROMPT
 from services.trace_service import TraceService
 
-def run_workflow(task: str) -> dict:
+def run_workflow(task: str, document_context: str | None = None, document_name: str | None = None) -> dict:
     """
     Orchestrates the NexusOps AI pipeline.
     Routes to mock or live execution based on environment config safely.
     """
     if not is_live_mode_enabled():
-        return get_mock_workflow(task)
+        return get_mock_workflow(task, document_context, document_name)
         
     try:
         # Generate live trace
@@ -20,10 +20,8 @@ def run_workflow(task: str) -> dict:
         # For now, we simulate the live pipeline by calling the API once for the final output.
         prompt = FINAL_OUTPUT_PROMPT.format(
             task=task,
-            plan="[Pending Live Plan]",
-            findings="[Pending Live Research]",
-            result="[Pending Live Execution]",
-            verdict="[Pending Live Review]"
+            document_name=document_name if document_name else "No document attached",
+            document_context=document_context if document_context else "No document was uploaded for this task."
         )
         
         llm_response = call_fireworks_api(prompt)
@@ -42,7 +40,7 @@ def run_workflow(task: str) -> dict:
             "decision": "pass"
         }
 
-        return {
+        response = {
             "task": task,
             "planner_output": {"agent": "planner", "status": "live", "plan": ["AI Plan Generated"]},
             "research_output": {"agent": "researcher", "status": "live", "findings": "AI Research complete"},
@@ -54,6 +52,12 @@ def run_workflow(task: str) -> dict:
             "reviewer_score": reviewer_score
         }
         
+        if document_name:
+            response["document_attached"] = True
+            response["document_name"] = document_name
+            
+        return response
+        
     except Exception as e:
         print(f"ERROR: Fireworks API call failed ({e}). Falling back to mock mode.")
-        return get_mock_workflow(task, error_mode=True)
+        return get_mock_workflow(task, document_context, document_name, error_mode=True)

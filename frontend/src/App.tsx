@@ -2,7 +2,7 @@ import { useMemo, useState, type ReactNode } from 'react'
 import {
   LayoutDashboard, GitBranch, ScrollText, Network, Settings, Plus, Play,
   ListChecks, Search, TerminalSquare, ShieldCheck, FileText,
-  Activity, Server, Box, Cpu, Bot
+  Activity, Server, Box, Cpu, Bot, Paperclip, Copy, Download
 } from 'lucide-react'
 
 type AgentStatus = 'idle' | 'running' | 'completed' | 'error'
@@ -42,6 +42,8 @@ interface WorkflowResponse {
   mode?: string
   trace?: TraceEvent[]
   reviewer_score?: ReviewerScore
+  document_attached?: boolean
+  document_name?: string
 }
 
 interface AgentCardConfig {
@@ -73,6 +75,9 @@ type IconName =
   | 'container'
   | 'gpu'
   | 'trace'
+  | 'paperclip'
+  | 'copy'
+  | 'download'
 
 const logoSrc = '/brand/nexusops-logo.png'
 
@@ -133,6 +138,9 @@ function Icon({ name }: { name: IconName }) {
     case 'container': return <Box {...props} />
     case 'gpu': return <Cpu {...props} />
     case 'trace': return <Activity {...props} />
+    case 'paperclip': return <Paperclip {...props} />
+    case 'copy': return <Copy {...props} />
+    case 'download': return <Download {...props} />
     default: return null
   }
 }
@@ -203,6 +211,8 @@ function BrandWordmark() {
 
 export default function App() {
   const [taskInput, setTaskInput] = useState('')
+  const [documentFile, setDocumentFile] = useState<File | null>(null)
+  const [documentError, setDocumentError] = useState<string | null>(null)
   const [workflowData, setWorkflowData] = useState<WorkflowResponse | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -224,10 +234,15 @@ export default function App() {
     setActiveTab('audit')
 
     try {
+      const formData = new FormData()
+      formData.append('task', taskInput)
+      if (documentFile) {
+        formData.append('document', documentFile)
+      }
+
       const response = await fetch('http://localhost:8000/api/workflow/run', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ task: taskInput }),
+        body: formData,
       })
 
       if (!response.ok) throw new Error(`API Error: ${response.status}`)
@@ -345,6 +360,41 @@ export default function App() {
               <p className="prompt-helper">
                 Try: Create a launch plan for NexusOps AI for the AMD Developer Hackathon.
               </p>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+                <input 
+                  type="file" 
+                  id="doc-upload" 
+                  accept=".txt,.md" 
+                  style={{ display: 'none' }}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    setDocumentError(null);
+                    if (!file) {
+                      setDocumentFile(null);
+                      return;
+                    }
+                    if (!file.name.endsWith('.txt') && !file.name.endsWith('.md')) {
+                      setDocumentError("Only .txt and .md files are supported.");
+                      setDocumentFile(null);
+                      return;
+                    }
+                    if (file.size > 1024 * 1024) {
+                      setDocumentError("File size exceeds the 1MB limit.");
+                      setDocumentFile(null);
+                      return;
+                    }
+                    setDocumentFile(file);
+                  }}
+                />
+                <label htmlFor="doc-upload" style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '6px 12px', background: 'var(--card)', border: '1px solid var(--line)', borderRadius: '6px', fontSize: '0.85rem', color: '#9eabc5', transition: 'background 0.2s' }}>
+                  <Icon name="paperclip" /> 
+                  {documentFile ? documentFile.name : 'Attach Document (.txt, .md)'}
+                </label>
+                {documentFile && <span className="state-badge completed" style={{ marginLeft: '4px' }}>Document attached</span>}
+              </div>
+              
+              {documentError && <div className="error-banner" style={{ marginBottom: '16px', padding: '8px 12px' }}>{documentError}</div>}
 
               <div className="command-actions">
                 <span>Press Ctrl + Enter to run the workflow.</span>
@@ -614,66 +664,137 @@ export default function App() {
         </div>
 
         {activeTab === 'report' ? (
-          <section className="report-content">
-            <div className="report-title-row">
-              <div>
-                <p className="eyebrow">Final Operations Report</p>
-                <h2>Report</h2>
+          <section className="report-content" style={{ padding: 0, display: 'flex', flexDirection: 'column', height: 'calc(100vh - var(--topbar-height) - 58px)' }}>
+            {/* Sticky action header */}
+            <div style={{
+              padding: '16px 20px',
+              borderBottom: '1px solid var(--line)',
+              background: 'rgba(10, 13, 29, 0.98)',
+              flexShrink: 0
+            }}>
+              <p className="eyebrow" style={{ marginBottom: '6px' }}>Final Operations Report</p>
+              <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px', marginBottom: workflowData?.final_output ? '14px' : '0' }}>
+                <span className={`mode-badge ${modeLabel(workflowData?.mode)}`}>
+                  {modeLabel(workflowData?.mode)}
+                </span>
+                {workflowData?.document_attached && (
+                  <span className="state-badge completed" style={{ fontSize: '0.72rem' }}>
+                    📎 {workflowData.document_name}
+                  </span>
+                )}
               </div>
-              <span className={`mode-badge ${modeLabel(workflowData?.mode)}`}>
-                {modeLabel(workflowData?.mode)}
-              </span>
+              {workflowData?.final_output && (
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button
+                    type="button"
+                    className="run-button"
+                    style={{
+                      background: 'rgba(168,150,255,0.12)',
+                      color: 'var(--violet)',
+                      border: '1px solid rgba(168,150,255,0.35)',
+                      padding: '6px 14px',
+                      fontSize: '0.78rem',
+                      width: 'auto',
+                      flex: 1,
+                      justifyContent: 'center',
+                      gap: '6px'
+                    }}
+                    onClick={() => navigator.clipboard.writeText(workflowData.final_output || '')}
+                  >
+                    <Icon name="copy" /> Copy
+                  </button>
+                  <button
+                    type="button"
+                    className="run-button"
+                    style={{
+                      background: 'rgba(49,216,242,0.1)',
+                      color: 'var(--cyan)',
+                      border: '1px solid rgba(49,216,242,0.3)',
+                      padding: '6px 14px',
+                      fontSize: '0.78rem',
+                      width: 'auto',
+                      flex: 1,
+                      justifyContent: 'center',
+                      gap: '6px'
+                    }}
+                    onClick={() => {
+                      const blob = new Blob([workflowData.final_output || ''], { type: 'text/markdown' });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = 'nexusops-report.md';
+                      a.click();
+                      URL.revokeObjectURL(url);
+                    }}
+                  >
+                    <Icon name="download" /> Download .md
+                  </button>
+                </div>
+              )}
             </div>
 
-            {workflowData?.final_output ? (
-              <>
-                <div className="task-summary">
-                  <span>Task</span>
-                  <p>{workflowData.task || taskInput}</p>
-                </div>
-                <div className="final-output">{workflowData.final_output}</div>
-                
-                {workflowData.reviewer_score && (
-                  <div className="reviewer-score-card">
-                    <p className="eyebrow">Reviewer Score</p>
-                    <div className="score-grid">
-                      <div className="score-item">
-                        <span>Clarity</span>
-                        <strong>{workflowData.reviewer_score.clarity ?? '-'}</strong>
-                      </div>
-                      <div className="score-item">
-                        <span>Completeness</span>
-                        <strong>{workflowData.reviewer_score.completeness ?? '-'}</strong>
-                      </div>
-                      <div className="score-item">
-                        <span>Actionability</span>
-                        <strong>{workflowData.reviewer_score.actionability ?? '-'}</strong>
-                      </div>
-                      <div className="score-item">
-                        <span>Risk</span>
-                        <strong className="risk-badge" data-risk={workflowData.reviewer_score.risk}>{workflowData.reviewer_score.risk ?? '-'}</strong>
-                      </div>
-                      <div className="score-item">
-                        <span>Decision</span>
-                        <strong className="decision-badge" data-decision={workflowData.reviewer_score.decision}>{workflowData.reviewer_score.decision ?? '-'}</strong>
+            {/* Scrollable report body */}
+            <div style={{ flex: 1, overflowY: 'auto', padding: '20px' }}>
+              {workflowData?.final_output ? (
+                <>
+                  <div className="task-summary">
+                    <span>Task</span>
+                    <p>{workflowData.task || taskInput}</p>
+                  </div>
+
+                  <div className="final-output" style={{
+                    whiteSpace: 'pre-wrap',
+                    lineHeight: '1.75',
+                    fontSize: '0.875rem',
+                    color: '#dde6ff',
+                    fontFamily: 'inherit',
+                    marginTop: '16px'
+                  }}>
+                    {workflowData.final_output}
+                  </div>
+
+                  {workflowData.reviewer_score && (
+                    <div className="reviewer-score-card" style={{ marginTop: '24px' }}>
+                      <p className="eyebrow">Reviewer Score</p>
+                      <div className="score-grid">
+                        <div className="score-item">
+                          <span>Clarity</span>
+                          <strong>{workflowData.reviewer_score.clarity ?? '-'}</strong>
+                        </div>
+                        <div className="score-item">
+                          <span>Completeness</span>
+                          <strong>{workflowData.reviewer_score.completeness ?? '-'}</strong>
+                        </div>
+                        <div className="score-item">
+                          <span>Actionability</span>
+                          <strong>{workflowData.reviewer_score.actionability ?? '-'}</strong>
+                        </div>
+                        <div className="score-item">
+                          <span>Risk</span>
+                          <strong className="risk-badge" data-risk={workflowData.reviewer_score.risk}>{workflowData.reviewer_score.risk ?? '-'}</strong>
+                        </div>
+                        <div className="score-item">
+                          <span>Decision</span>
+                          <strong className="decision-badge" data-decision={workflowData.reviewer_score.decision}>{workflowData.reviewer_score.decision ?? '-'}</strong>
+                        </div>
                       </div>
                     </div>
+                  )}
+                </>
+              ) : (
+                <div className="empty-report">
+                  <div className="empty-report-icon">
+                    <Icon name="report" />
                   </div>
-                )}
-              </>
-            ) : (
-              <div className="empty-report">
-                <div className="empty-report-icon">
-                  <Icon name="report" />
+                  <span>Operations report standby</span>
+                  <h3>Run a workflow to generate the final report</h3>
+                  <p>
+                    NexusOps AI will summarize the reviewed outcome here, including the
+                    final output, execution mode, and the traceable agent handoff.
+                  </p>
                 </div>
-                <span>Operations report standby</span>
-                <h3>Run a workflow to generate the final report</h3>
-                <p>
-                  NexusOps AI will summarize the reviewed outcome here, including the
-                  final output, execution mode, and the traceable agent handoff.
-                </p>
-              </div>
-            )}
+              )}
+            </div>
           </section>
         ) : (
           <section className="audit-content">

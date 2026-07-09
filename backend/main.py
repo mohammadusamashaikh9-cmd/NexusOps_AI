@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Form, File, UploadFile, HTTPException
 from pydantic import BaseModel
 from typing import Any, Dict
 
@@ -24,9 +24,27 @@ def health_check():
 # Mock Endpoints for MVP Agents
 from services.workflow_service import run_workflow
 
-class WorkflowRequest(BaseModel):
-    task: str
-
 @app.post("/api/workflow/run")
-def api_run_workflow(request: WorkflowRequest):
-    return run_workflow(request.task)
+async def api_run_workflow(
+    task: str = Form(...),
+    document: UploadFile = File(None)
+):
+    document_context = None
+    document_name = None
+    
+    if document is not None and document.filename:
+        if not (document.filename.endswith(".txt") or document.filename.endswith(".md")):
+            raise HTTPException(status_code=400, detail="Only .txt and .md files are supported.")
+        
+        content_bytes = await document.read(1024 * 1024 + 1)
+        if len(content_bytes) > 1024 * 1024:
+            raise HTTPException(status_code=400, detail="File size exceeds the 1MB limit.")
+            
+        try:
+            document_context = content_bytes.decode('utf-8')
+        except UnicodeDecodeError:
+            raise HTTPException(status_code=400, detail="File must be valid UTF-8 text.")
+            
+        document_name = document.filename
+        
+    return run_workflow(task, document_context, document_name)
