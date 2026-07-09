@@ -8,8 +8,17 @@ def get_mock_workflow(task: str, document_context: str | None = None, document_n
     tracer.add_trace("task_received", "completed", f"Received task: {task[:50]}...")
     tracer.add_trace("planner", "completed", "Decomposed task into execution plan.")
     tracer.add_trace("research", "completed", "Ingested vector data from shared memory.")
-    tracer.add_trace("executor", "completed", "Generated code sequences and API calls.")
-    tracer.add_trace("reviewer", "completed", "Validated output integrity against safety protocols.")
+    
+    # MVP LOOP SIMULATION
+    # Iteration 1
+    tracer.add_trace("executor_attempt_1", "completed", "Generated initial code sequences.")
+    tracer.add_trace("reviewer_attempt_1_revision_requested", "completed", "Failed integrity check. Revision requested.")
+    reviewer_feedback = "Ensure optimization targets cluster A instead of B."
+    
+    # Iteration 2
+    tracer.add_trace("executor_attempt_2", "completed", "Generated revised code sequences.")
+    tracer.add_trace("reviewer_attempt_2_approved", "completed", "Validated output integrity against safety protocols.")
+    
     tracer.add_trace("final_report", "completed", "Final operations report generated.")
     
     # Lightweight reviewer score
@@ -26,9 +35,12 @@ def get_mock_workflow(task: str, document_context: str | None = None, document_n
 ## Task
 {task}
 
-## Document Context
-- File: {document_name if document_name else 'No document attached'}
-- Summary: {'Mock extracted document.' if document_context else 'No document provided.'}
+## Document Context Used
+- **File**: {document_name if document_name else 'No document attached'}
+- **Summary**: {'Mock extracted document.' if document_context else 'No document provided.'}
+
+## Executive Summary
+Workflow completed successfully with iteration via the Agent Loop architecture.
 
 ## Planner Summary
 Analyzed metrics and decomposed the task into an execution plan.
@@ -37,10 +49,16 @@ Analyzed metrics and decomposed the task into an execution plan.
 Ingested vector data from shared memory and found inefficiencies in cluster A.
 
 ## Execution Summary
-Generated code sequences and deployed optimization patch.
+Generated code sequences and deployed optimization patch (Attempt 2).
 
-## Review
-Validated output integrity. Score: 95/100, Risk: Low, Decision: Pass.
+## Review / Quality Score
+- Clarity: 95
+- Completeness: 90
+- Actionability: 92
+- Risk Level: Low
+- Decision: **Pass**
+
+Validated output integrity.
 
 ## Final Recommendation
 Workflow completed successfully and reviewed{ ' (Fallback Mode)' if error_mode else '' }.
@@ -50,12 +68,16 @@ Workflow completed successfully and reviewed{ ' (Fallback Mode)' if error_mode e
         "task": task,
         "planner_output": {"agent": "planner", "status": status, "plan": ["Analyze metrics", "Optimize routes"]},
         "research_output": {"agent": "researcher", "status": status, "findings": "Found inefficiencies in cluster A."},
-        "executor_output": {"agent": "executor", "status": status, "result": "Deployed optimization patch."},
+        "executor_output": {"agent": "executor", "status": status, "result": "Deployed optimization patch (Iter 2)."},
         "reviewer_output": {"agent": "reviewer", "status": status, "approval": True},
         "final_output": mock_final_output,
         "mode": "fallback_mock" if error_mode else "mock",
         "trace": tracer.get_traces(),
-        "reviewer_score": reviewer_score
+        "reviewer_score": reviewer_score,
+        "loop_enabled": True,
+        "iteration_count": 2,
+        "revision_requested": False,
+        "reviewer_feedback": reviewer_feedback
     }
     
     if document_name:
