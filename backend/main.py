@@ -83,3 +83,55 @@ async def api_run_workflow(
         document_name = document.filename
         
     return run_workflow(task, document_context, document_name)
+
+from fastapi.responses import Response
+
+@app.post("/api/report/export")
+async def api_export_report(
+    report_content: str = Form(...),
+    format: str = Form(...)
+):
+    if not report_content.strip():
+        raise HTTPException(status_code=400, detail="Report content cannot be empty.")
+    
+    if format == 'md':
+        return Response(
+            content=report_content, 
+            media_type="text/markdown", 
+            headers={"Content-Disposition": "attachment; filename=nexusops-report.md"}
+        )
+        
+    elif format == 'pdf':
+        try:
+            from fpdf import FPDF
+            pdf = FPDF()
+            pdf.add_page()
+            pdf.set_font("Helvetica", size=11)
+            safe_content = report_content.encode('latin-1', 'replace').decode('latin-1')
+            pdf.multi_cell(0, 6, text=safe_content)
+            pdf_bytes = pdf.output()
+            return Response(
+                content=bytes(pdf_bytes), 
+                media_type="application/pdf", 
+                headers={"Content-Disposition": "attachment; filename=nexusops-report.pdf"}
+            )
+        except Exception as e:
+            raise HTTPException(status_code=500, detail="Failed to generate PDF export.")
+            
+    elif format == 'docx':
+        try:
+            doc = docx.Document()
+            for line in report_content.split('\n'):
+                doc.add_paragraph(line)
+            buf = io.BytesIO()
+            doc.save(buf)
+            return Response(
+                content=buf.getvalue(), 
+                media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document", 
+                headers={"Content-Disposition": "attachment; filename=nexusops-report.docx"}
+            )
+        except Exception as e:
+            raise HTTPException(status_code=500, detail="Failed to generate DOCX export.")
+            
+    else:
+        raise HTTPException(status_code=400, detail="Unsupported export format. Supported: md, pdf, docx.")

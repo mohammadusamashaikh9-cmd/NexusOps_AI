@@ -7,3 +7,4 @@ openai
 python-multipart 
 pypdf
 python-docx
+fpdf2

@@ -937,6 +937,56 @@ h3 {
   background: rgba(245, 174, 70, 0.13);
 }
 
+.report-action-download {
+  color: #31d8f2;
+  border-color: rgba(49, 216, 242, 0.4);
+}
+
+.export-wrapper {
+  position: relative;
+}
+
+.export-menu {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  right: 0;
+  background: rgba(12, 18, 36, 0.97);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(49, 216, 242, 0.25);
+  border-radius: 10px;
+  width: 160px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(49, 216, 242, 0.08);
+  z-index: 1000;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: menuIn 120ms ease;
+}
+
+.export-menu-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 14px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+  transition: all 150ms ease;
+}
+
+.export-menu-item:last-child {
+  border-bottom: none;
+}
+
+.export-menu-item:hover {
+  background: rgba(49, 216, 242, 0.09);
+  color: #31d8f2;
+}
+
 .mode-badge.live {
   color: #aaf7d2;
   border-color: rgba(41, 211, 145, 0.44);

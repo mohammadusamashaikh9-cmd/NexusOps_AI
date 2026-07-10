@@ -219,9 +219,11 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<ReportTab>('report')
   const [activeSection, setActiveSection] = useState<SectionId>('command')
   const [showAttachMenu, setShowAttachMenu] = useState(false)
+  const [showExportMenu, setShowExportMenu] = useState(false)
 
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const attachMenuRef = useRef<HTMLDivElement>(null)
+  const exportMenuRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Auto-resize textarea up to ~5 lines, then scroll internally
@@ -237,17 +239,21 @@ export default function App() {
 
   useEffect(() => { autoResize() }, [taskInput, autoResize])
 
-  // Close attach menu on outside click or Escape key
+  // Close menus on outside click or Escape key
   useEffect(() => {
-    if (!showAttachMenu) return
+    if (!showAttachMenu && !showExportMenu) return
     const mouseHandler = (e: MouseEvent) => {
-      if (attachMenuRef.current && !attachMenuRef.current.contains(e.target as Node)) {
+      if (showAttachMenu && attachMenuRef.current && !attachMenuRef.current.contains(e.target as Node)) {
         setShowAttachMenu(false)
+      }
+      if (showExportMenu && exportMenuRef.current && !exportMenuRef.current.contains(e.target as Node)) {
+        setShowExportMenu(false)
       }
     }
     const keyHandler = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         setShowAttachMenu(false)
+        setShowExportMenu(false)
       }
     }
     document.addEventListener('mousedown', mouseHandler)
@@ -285,15 +291,47 @@ export default function App() {
         body: formData,
       })
 
-      if (!response.ok) throw new Error(`API Error: ${response.status}`)
+      const data = await response.json()
+      if (!response.ok) {
+        throw new Error(data.detail || 'Workflow execution failed.')
+      }
 
-      const data = (await response.json()) as WorkflowResponse
       setWorkflowData(data)
       setActiveTab('report')
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to connect to backend.')
+    } catch (err: any) {
+      setError(err.message || 'An error occurred during execution.')
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const handleExport = async (format: 'md' | 'pdf' | 'docx') => {
+    if (!workflowData?.final_output) return
+    setShowExportMenu(false)
+    try {
+      const formData = new FormData()
+      formData.append('report_content', workflowData.final_output)
+      formData.append('format', format)
+
+      const response = await fetch('http://localhost:8000/api/report/export', {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (!response.ok) {
+        throw new Error('Export failed.')
+      }
+
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `nexusops-report.${format}`
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch (err: any) {
+      console.error(err)
+      alert("Export failed. Please try again.")
     }
   }
 
@@ -348,6 +386,7 @@ export default function App() {
             setIsLoading(false)
             setActiveTab('report')
             setShowAttachMenu(false)
+            setShowExportMenu(false)
             const fileInput = document.getElementById('doc-upload') as HTMLInputElement | null
             if (fileInput) fileInput.value = ''
             // Reset textarea height
@@ -809,21 +848,28 @@ export default function App() {
                   >
                     <Icon name="copy" /> Copy
                   </button>
-                  <button
-                    type="button"
-                    className="report-action-btn report-action-download"
-                    onClick={() => {
-                      const blob = new Blob([workflowData.final_output || ''], { type: 'text/markdown' });
-                      const url = URL.createObjectURL(blob);
-                      const a = document.createElement('a');
-                      a.href = url;
-                      a.download = 'nexusops-report.md';
-                      a.click();
-                      URL.revokeObjectURL(url);
-                    }}
-                  >
-                    <Icon name="download" /> Download
-                  </button>
+                  <div className="export-wrapper" ref={exportMenuRef} style={{ position: 'relative' }}>
+                    <button
+                      type="button"
+                      className="report-action-btn report-action-download"
+                      onClick={() => setShowExportMenu(!showExportMenu)}
+                    >
+                      <Icon name="download" /> Export
+                    </button>
+                    {showExportMenu && (
+                      <div className="export-menu">
+                        <button type="button" className="export-menu-item" onClick={() => handleExport('md')}>
+                          Markdown (.md)
+                        </button>
+                        <button type="button" className="export-menu-item" onClick={() => handleExport('pdf')}>
+                          PDF (.pdf)
+                        </button>
+                        <button type="button" className="export-menu-item" onClick={() => handleExport('docx')}>
+                          Word (.docx)
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
