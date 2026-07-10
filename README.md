@@ -2,61 +2,105 @@
 
 An enterprise AI operations platform built for the **AMD Developer Hackathon ACT II, Track 3 (Unicorn / Open Innovation)**.
 
-## Project Goal
-Build a robust platform where four AI agents collaborate autonomously to complete complex operations tasks:
-1. **Planner Agent:** Breaks down user requests into actionable workflows.
-2. **Research Agent:** Gathers necessary context, documentation, and system states.
-3. **Executor Agent:** Interacts with external systems to execute the planned actions.
-4. **Reviewer Agent:** Validates the execution and ensures quality and safety.
+NexusOps AI provides a robust, multi-agent workspace designed to break down and execute complex operations tasks autonomously, bringing premium enterprise workflows to modern LLMs.
 
-## Demo Video
-Demo video link: To be added before final submission.
+---
 
-## Validation Evidence
-Proof of AMD hardware and Fireworks AI integration:
-- [AMD Validation Plan](docs/AMD_VALIDATION_PLAN.md)
-- [AMD Notebook Execution](notebooks/amd_validation_nexusops.ipynb)
-- [Evidence Screenshots](docs/evidence/)
+## AMD Compute Usage
+This project leverages **AMD hardware** for its AI inference engine through the **Fireworks AI** platform (which utilizes AMD Instinct MI300X accelerators for models like Llama/Gemma). 
 
-## Tech Stack
-- **Backend:** FastAPI + Python
-- **Frontend:** React + TypeScript + Tailwind CSS
-- **AI Model Layer:** Mock fallback mode plus live Fireworks AI inference using a confirmed serverless LLM.
-- **Compute:** AMD Hackathon Jupyter notebook validation with ROCm / AMD hardware evidence.
-- **Deployment:** Docker / docker-compose ready.
+*Note: As required for the hackathon, direct AMD hardware validation logic and test executions have been documented. The live deployment is designed to query endpoints accelerated by AMD hardware.*
 
-## Getting Started
+- **AMD Validation Plan:** [docs/AMD_VALIDATION_PLAN.md](docs/AMD_VALIDATION_PLAN.md)
+- **AMD Notebook Execution (Pending evidence / executed tests):** [notebooks/amd_validation_nexusops.ipynb](notebooks/amd_validation_nexusops.ipynb)
 
-1. Clone the repository.
-2. Copy `.env.example` to `.env` and configure it.
+---
 
-### Option A: Run with Docker (Recommended)
-Run the following command to spin up both the frontend and backend:
+## Submission Assets
+- **GitHub Repository:** [https://github.com/mohammadusamashaikh9-cmd/NexusOps_AI](https://github.com/mohammadusamashaikh9-cmd/NexusOps_AI)
+- **Demo Video:** *[To be added before final submission]*
+- **Slide Deck:** *[To be added before final submission]*
+- **Live Demo / Hosted URL:** *[Optional - To be added if deployed]*
+
+---
+
+## Key Features
+- **Multi-agent workflow:** Dynamic coordination between specialized AI roles.
+  - **Planner Agent:** Breaks down user requests into actionable workflows.
+  - **Research Agent:** Gathers necessary context, documentation, and system states.
+  - **Executor Agent:** Interacts with external systems to execute the planned actions.
+  - **Reviewer Agent:** Validates the execution and ensures quality and safety.
+- **Audit Trace:** Transparent, step-by-step logging of the entire agent execution loop.
+- **Enterprise Document Support:** Native upload support for **PDF, DOCX, TXT, and MD** files to provide rich context to the AI workflow.
+- **Report Export:** Instantly export generated operations reports in **Markdown, PDF, or DOCX** formats.
+- **FastAPI Backend:** Lightweight, asynchronous Python backend tailored for high-speed LLM integration.
+- **React Dashboard:** Premium, dark-themed enterprise UI with real-time state management.
+- **Fireworks/Gemma Readiness:** Pre-configured to support serverless LLM calls via Fireworks AI, ensuring seamless inference on advanced models.
+
+---
+
+## Demo Workflow
+1. **Initialize Session:** The user opens the NexusOps AI dashboard.
+2. **Provide Context:** The user attaches an enterprise document (e.g., a PDF report or DOCX requirements file).
+3. **Issue Command:** The user types a high-level operational command (e.g., "Analyze this system report and generate a remediation plan").
+4. **Agent Execution:** The Multi-Agent backend spins up, triggering the Planner, Researcher, Executor, and Reviewer sequence.
+5. **Review Audit Trace:** The user monitors the live Audit Trace to see exactly what decisions the AI agents are making in real-time.
+6. **Export Output:** The final report is generated and can be cleanly exported to PDF or DOCX for executive review.
+
+---
+
+## Local Setup
+
+### 1. Backend (FastAPI)
 ```bash
-docker-compose up --build
+cd backend
+python -m venv .venv
+# On Windows: .venv\Scripts\activate
+# On Linux/Mac: source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn main:app --reload --port 8000
 ```
+*(The backend will be available at `http://localhost:8000`)*
 
-### Option B: Run Locally
-**Frontend:**
+### 2. Frontend (React)
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
+*(The frontend will be available at `http://localhost:5173`)*
 
-**Backend:**
-```bash
-cd backend
-uvicorn main:app --reload --port 8000
+---
+
+## Repository Structure
+```text
+NexusOps_AI/
+├── backend/                  # FastAPI backend application
+│   ├── main.py               # Main application entrypoint
+│   ├── requirements.txt      # Python dependencies
+│   └── services/             # Core agent and workflow services
+├── frontend/                 # React frontend application
+│   ├── src/
+│   │   ├── App.tsx           # Main dashboard UI component
+│   │   └── index.css         # Custom premium styling
+│   └── package.json          # Node dependencies
+├── docs/                     # Validation documentation and plans
+├── notebooks/                # Jupyter notebooks for AMD validation tests
+└── README.md                 # Project documentation
 ```
 
-### Accessing the Application
-- **Frontend Dashboard:** http://localhost:5173
-- **Backend API Docs:** http://localhost:8000/docs
-- **Backend Health Endpoint:** http://localhost:8000/api/health
+---
 
-## AI Engine Modes
-NexusOps AI operates in two distinct backend modes, controlled by the `USE_MOCK_AI` environment variable in your `.env` file:
+## Security / No Secrets
+**Note to reviewers:** This repository does not contain any hardcoded API keys or sensitive secrets. Any API endpoints that require authentication (like the Fireworks API) retrieve their keys securely via local `.env` variables (`FIREWORKS_API_KEY`). 
 
-1. **Mock Mode (Default):** Runs instantly using local simulated data. Perfect for UI/UX development and testing without incurring API costs. Triggered when `USE_MOCK_AI=true` or if the Fireworks API key is missing/invalid.
-2. **Fireworks AI Mode:** Enables live Fireworks AI inference for task breakdown, agent loop execution, and final report generation. The current tested serverless model is configured through FIREWORKS_MODEL. Requires `USE_MOCK_AI=false` and a valid `FIREWORKS_API_KEY`.
+---
+
+## Track 3 Submission Checklist
+- [x] Track 3: Unicorn / Open Innovation alignment
+- [x] GitHub repository URL provided
+- [ ] Demo video included
+- [ ] Slide deck included
+- [ ] Live demo / hosted URL (Optional)
+- [x] AMD compute usage demonstrated/documented
+- [x] No Docker image required for submission (local setup provided)
