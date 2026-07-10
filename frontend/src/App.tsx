@@ -455,7 +455,7 @@ export default function App() {
                             <Icon name="paperclip" />
                             <span>
                               <strong>Attach Document</strong>
-                              <small>Supports TXT, MD · Max 1 MB</small>
+                              <small>Supports PDF, DOCX, TXT, MD</small>
                             </span>
                           </div>
                         </div>
@@ -467,14 +467,16 @@ export default function App() {
                       ref={fileInputRef}
                       type="file"
                       id="doc-upload"
-                      accept=".txt,.md,text/plain,text/markdown"
+                      accept=".txt,.md,.pdf,.docx,text/plain,text/markdown,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                       style={{ display: 'none' }}
                       onChange={(e) => {
                         const file = e.target.files?.[0];
                         setDocumentError(null);
                         if (!file) { setDocumentFile(null); return; }
-                        if (!file.name.endsWith('.txt') && !file.name.endsWith('.md')) {
-                          setDocumentError('Only .txt and .md files are supported.');
+                        
+                        const filename = file.name.toLowerCase();
+                        if (!filename.endsWith('.txt') && !filename.endsWith('.md') && !filename.endsWith('.pdf') && !filename.endsWith('.docx')) {
+                          setDocumentError('Only PDF, DOCX, TXT, and MD files are supported.');
                           setDocumentFile(null);
                           return;
                         }
