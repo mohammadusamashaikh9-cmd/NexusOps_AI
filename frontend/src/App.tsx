@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import {
   LayoutDashboard, GitBranch, ScrollText, Network, Settings, Plus, Play,
   ListChecks, Search, TerminalSquare, ShieldCheck, FileText,
@@ -218,6 +218,45 @@ export default function App() {
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<ReportTab>('report')
   const [activeSection, setActiveSection] = useState<SectionId>('command')
+  const [showAttachMenu, setShowAttachMenu] = useState(false)
+
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const attachMenuRef = useRef<HTMLDivElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Auto-resize textarea up to ~5 lines, then scroll internally
+  const autoResize = useCallback(() => {
+    const el = textareaRef.current
+    if (!el) return
+    el.style.height = 'auto'
+    const lineHeight = 24
+    const maxHeight = lineHeight * 5 + 28 // 5 lines + padding
+    el.style.height = Math.min(el.scrollHeight, maxHeight) + 'px'
+    el.style.overflowY = el.scrollHeight > maxHeight ? 'auto' : 'hidden'
+  }, [])
+
+  useEffect(() => { autoResize() }, [taskInput, autoResize])
+
+  // Close attach menu on outside click or Escape key
+  useEffect(() => {
+    if (!showAttachMenu) return
+    const mouseHandler = (e: MouseEvent) => {
+      if (attachMenuRef.current && !attachMenuRef.current.contains(e.target as Node)) {
+        setShowAttachMenu(false)
+      }
+    }
+    const keyHandler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setShowAttachMenu(false)
+      }
+    }
+    document.addEventListener('mousedown', mouseHandler)
+    document.addEventListener('keydown', keyHandler)
+    return () => {
+      document.removeEventListener('mousedown', mouseHandler)
+      document.removeEventListener('keydown', keyHandler)
+    }
+  }, [showAttachMenu])
 
   const sessionId = useMemo(() => {
     const seed = workflowData?.task || taskInput || 'NexusOps AI'
@@ -232,6 +271,7 @@ export default function App() {
     setError(null)
     setWorkflowData(null)
     setActiveTab('audit')
+    setShowAttachMenu(false)
 
     try {
       const formData = new FormData()
@@ -296,7 +336,27 @@ export default function App() {
           ))}
         </nav>
 
-        <button className="new-session-button" type="button" onClick={() => setWorkflowData(null)}>
+        <button
+          className="new-session-button"
+          type="button"
+          onClick={() => {
+            setTaskInput('')
+            setDocumentFile(null)
+            setDocumentError(null)
+            setWorkflowData(null)
+            setError(null)
+            setIsLoading(false)
+            setActiveTab('report')
+            setShowAttachMenu(false)
+            const fileInput = document.getElementById('doc-upload') as HTMLInputElement | null
+            if (fileInput) fileInput.value = ''
+            // Reset textarea height
+            if (textareaRef.current) {
+              textareaRef.current.style.height = 'auto'
+              textareaRef.current.style.overflowY = 'hidden'
+            }
+          }}
+        >
           <Icon name="plus" />
           New Session
         </button>
@@ -333,7 +393,7 @@ export default function App() {
               </div>
             </section>
 
-            <section className="task-card" aria-labelledby="task-command-title">
+            <section className="task-card composer-card" aria-labelledby="task-command-title">
               <div className="section-heading">
                 <div>
                   <p className="eyebrow">Task Command</p>
@@ -344,72 +404,132 @@ export default function App() {
                 </span>
               </div>
 
-              <textarea
-                value={taskInput}
-                onChange={(event) => setTaskInput(event.target.value)}
-                onKeyDown={(event) => {
-                  if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
-                    event.preventDefault()
-                    handleRunWorkflow()
-                  }
-                }}
-                placeholder="Describe an operations task for the AI agent team..."
-                className="task-input"
-                rows={4}
-              />
-              <p className="prompt-helper">
-                Try: Create a launch plan for NexusOps AI for the AMD Developer Hackathon.
-              </p>
-
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-                <input 
-                  type="file" 
-                  id="doc-upload" 
-                  accept=".txt,.md" 
-                  style={{ display: 'none' }}
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    setDocumentError(null);
-                    if (!file) {
-                      setDocumentFile(null);
-                      return;
-                    }
-                    if (!file.name.endsWith('.txt') && !file.name.endsWith('.md')) {
-                      setDocumentError("Only .txt and .md files are supported.");
-                      setDocumentFile(null);
-                      return;
-                    }
-                    if (file.size > 1024 * 1024) {
-                      setDocumentError("File size exceeds the 1MB limit.");
-                      setDocumentFile(null);
-                      return;
-                    }
-                    setDocumentFile(file);
+              {/* Unified composer box */}
+              <div className={`composer-box${isLoading ? ' composer-loading' : ''}`}>
+                <textarea
+                  ref={textareaRef}
+                  value={taskInput}
+                  onChange={(event) => {
+                    setTaskInput(event.target.value)
                   }}
+                  onKeyDown={(event) => {
+                    if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+                      event.preventDefault()
+                      handleRunWorkflow()
+                    }
+                  }}
+                  placeholder="Describe an operations task for the AI agent team…"
+                  className="composer-textarea"
+                  rows={2}
+                  disabled={isLoading}
                 />
-                <label htmlFor="doc-upload" style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '6px 12px', background: 'var(--card)', border: '1px solid var(--line)', borderRadius: '6px', fontSize: '0.85rem', color: '#9eabc5', transition: 'background 0.2s' }}>
-                  <Icon name="paperclip" /> 
-                  {documentFile ? documentFile.name : 'Attach Document (.txt, .md)'}
-                </label>
-                {documentFile && <span className="state-badge completed" style={{ marginLeft: '4px' }}>Document attached</span>}
-              </div>
-              
-              {documentError && <div className="error-banner" style={{ marginBottom: '16px', padding: '8px 12px' }}>{documentError}</div>}
 
-              <div className="command-actions">
-                <span>Press Ctrl + Enter to run the workflow.</span>
-                <button
-                  className="run-button"
-                  type="button"
-                  onClick={handleRunWorkflow}
-                  disabled={isLoading || !taskInput.trim()}
-                >
-                  <Icon name="run" />
-                  {isLoading ? 'Running Workflow' : 'Run Workflow'}
-                </button>
+                {/* Composer action bar */}
+                <div className="composer-bar">
+                  <div className="composer-bar-left">
+                    {/* + Attach button */}
+                    <div className="attach-wrapper" ref={attachMenuRef}>
+                      <button
+                        type="button"
+                        className="composer-attach-btn"
+                        title="Attach document"
+                        onClick={() => setShowAttachMenu(v => !v)}
+                        disabled={isLoading}
+                      >
+                        <Icon name="plus" />
+                      </button>
+                      {showAttachMenu && (
+                        <div 
+                          className="attach-menu" 
+                          role="menu"
+                        >
+                          <p className="attach-menu-label">Attach to workflow</p>
+                          <div
+                            className="attach-menu-item"
+                            role="menuitem"
+                            onClick={() => {
+                              fileInputRef.current?.click();
+                              setShowAttachMenu(false);
+                            }}
+                          >
+                            <Icon name="paperclip" />
+                            <span>
+                              <strong>Attach Document</strong>
+                              <small>Supports TXT, MD · Max 1 MB</small>
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Hidden file input */}
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      id="doc-upload"
+                      accept=".txt,.md,text/plain,text/markdown"
+                      style={{ display: 'none' }}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        setDocumentError(null);
+                        if (!file) { setDocumentFile(null); return; }
+                        if (!file.name.endsWith('.txt') && !file.name.endsWith('.md')) {
+                          setDocumentError('Only .txt and .md files are supported.');
+                          setDocumentFile(null);
+                          return;
+                        }
+                        if (file.size > 1024 * 1024) {
+                          setDocumentError('File size exceeds the 1 MB limit.');
+                          setDocumentFile(null);
+                          return;
+                        }
+                        setDocumentFile(file);
+                      }}
+                    />
+
+                    {/* File chip */}
+                    {documentFile && (
+                      <div className="file-chip">
+                        <Icon name="paperclip" />
+                        <span className="file-chip-name">{documentFile.name}</span>
+                        <button
+                          type="button"
+                          className="file-chip-remove"
+                          title="Remove attachment"
+                          onClick={() => {
+                            setDocumentFile(null);
+                            setDocumentError(null);
+                            const fi = document.getElementById('doc-upload') as HTMLInputElement | null;
+                            if (fi) fi.value = '';
+                          }}
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    )}
+
+                    <span className="composer-hint">Ctrl + Enter to run</span>
+                  </div>
+
+                  {/* Run button */}
+                  <button
+                    className="run-button composer-run-btn"
+                    type="button"
+                    onClick={handleRunWorkflow}
+                    disabled={isLoading || !taskInput.trim()}
+                  >
+                    <Icon name="run" />
+                    {isLoading ? 'Running…' : 'Run Workflow'}
+                  </button>
+                </div>
               </div>
 
-              {error && <div className="error-banner">{error}</div>}
+              {documentError && (
+                <div className="error-banner" style={{ marginTop: '10px', padding: '8px 12px' }}>
+                  {documentError}
+                </div>
+              )}
+              {error && <div className="error-banner" style={{ marginTop: '10px' }}>{error}</div>}
             </section>
 
             <section className="pipeline-section" aria-labelledby="pipeline-title">
@@ -677,46 +797,19 @@ export default function App() {
                 <span className={`mode-badge ${modeLabel(workflowData?.mode)}`}>
                   {modeLabel(workflowData?.mode)}
                 </span>
-                {workflowData?.document_attached && (
-                  <span className="state-badge completed" style={{ fontSize: '0.72rem' }}>
-                    📎 {workflowData.document_name}
-                  </span>
-                )}
               </div>
               {workflowData?.final_output && (
-                <div style={{ display: 'flex', gap: '8px' }}>
+                <div className="report-actions">
                   <button
                     type="button"
-                    className="run-button"
-                    style={{
-                      background: 'rgba(168,150,255,0.12)',
-                      color: 'var(--violet)',
-                      border: '1px solid rgba(168,150,255,0.35)',
-                      padding: '6px 14px',
-                      fontSize: '0.78rem',
-                      width: 'auto',
-                      flex: 1,
-                      justifyContent: 'center',
-                      gap: '6px'
-                    }}
+                    className="report-action-btn report-action-copy"
                     onClick={() => navigator.clipboard.writeText(workflowData.final_output || '')}
                   >
                     <Icon name="copy" /> Copy
                   </button>
                   <button
                     type="button"
-                    className="run-button"
-                    style={{
-                      background: 'rgba(49,216,242,0.1)',
-                      color: 'var(--cyan)',
-                      border: '1px solid rgba(49,216,242,0.3)',
-                      padding: '6px 14px',
-                      fontSize: '0.78rem',
-                      width: 'auto',
-                      flex: 1,
-                      justifyContent: 'center',
-                      gap: '6px'
-                    }}
+                    className="report-action-btn report-action-download"
                     onClick={() => {
                       const blob = new Blob([workflowData.final_output || ''], { type: 'text/markdown' });
                       const url = URL.createObjectURL(blob);
@@ -727,7 +820,7 @@ export default function App() {
                       URL.revokeObjectURL(url);
                     }}
                   >
-                    <Icon name="download" /> Download .md
+                    <Icon name="download" /> Download
                   </button>
                 </div>
               )}
