@@ -17,10 +17,10 @@ This project leverages **AMD hardware** for its AI inference engine through the 
 ---
 
 ## Submission Assets
-- **GitHub Repository:** [https://github.com/mohammadusamashaikh9-cmd/NexusOps_AI](https://github.com/mohammadusamashaikh9-cmd/NexusOps_AI)
-- **Demo Video:** *[To be added before final submission]*
-- **Slide Deck:** *[To be added before final submission]*
-- **Live Demo / Hosted URL:** *[Optional - To be added if deployed]*
+- GitHub Repository: https://github.com/mohammadusamashaikh9-cmd/NexusOps_AI
+- Demo Video: https://drive.google.com/file/d/1miTM-ID4E2WaE8nYKohun2sw45Q1z28B/view?usp=drive_link
+- Slide Deck: https://drive.google.com/file/d/1lq8UIVZ6n3aLi6z1mVOG4irRPgA8L_5C/view?usp=drive_link
+- Live Demo / Hosted URL: Not deployed; local demo is shown in the demo video and can be run using the setup instructions below.
 
 ---
 
@@ -99,8 +99,8 @@ NexusOps_AI/
 ## Track 3 Submission Checklist
 - [x] Track 3: Unicorn / Open Innovation alignment
 - [x] GitHub repository URL provided
-- [ ] Demo video included
-- [ ] Slide deck included
-- [ ] Live demo / hosted URL (Optional)
+- [x] Demo video included
+- [x] Slide deck included
+- [ ] Live demo / hosted URL optional
 - [x] AMD compute usage demonstrated/documented
-- [x] No Docker image required for submission (local setup provided)
+- [x] No Docker image required for Track 3 submission
