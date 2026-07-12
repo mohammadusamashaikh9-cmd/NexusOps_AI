@@ -20,7 +20,8 @@ This project leverages **AMD hardware** for its AI inference engine through the 
 - GitHub Repository: https://github.com/mohammadusamashaikh9-cmd/NexusOps_AI
 - Demo Video: https://drive.google.com/file/d/1miTM-ID4E2WaE8nYKohun2sw45Q1z28B/view?usp=drive_link
 - Slide Deck: https://drive.google.com/file/d/1lq8UIVZ6n3aLi6z1mVOG4irRPgA8L_5C/view?usp=drive_link
-- Live Demo / Hosted URL: Not deployed; local demo is shown in the demo video and can be run using the setup instructions below.
+- Live Demo / Hosted URL: https://nexus-ops-ai-umber.vercel.app
+
 
 ---
 
