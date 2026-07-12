@@ -9,10 +9,17 @@ app = FastAPI(
 )
 
 from fastapi.middleware.cors import CORSMiddleware
+allowed_origins = [
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "https://nexus-ops-ai-umber.vercel.app",
+    "https://nexus-ops-ai.vercel.app"
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=allowed_origins,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
