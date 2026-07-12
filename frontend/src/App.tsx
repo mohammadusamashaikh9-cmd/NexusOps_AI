@@ -79,6 +79,7 @@ type IconName =
   | 'copy'
   | 'download'
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
 const logoSrc = '/brand/nexusops-logo.png'
 
 const agentCards: AgentCardConfig[] = [
@@ -286,7 +287,7 @@ export default function App() {
         formData.append('document', documentFile)
       }
 
-      const response = await fetch('http://localhost:8000/api/workflow/run', {
+      const response = await fetch(`${API_BASE_URL}/api/workflow/run`, {
         method: 'POST',
         body: formData,
       })
@@ -313,7 +314,7 @@ export default function App() {
       formData.append('report_content', workflowData.final_output)
       formData.append('format', format)
 
-      const response = await fetch('http://localhost:8000/api/report/export', {
+      const response = await fetch(`${API_BASE_URL}/api/report/export`, {
         method: 'POST',
         body: formData,
       })
